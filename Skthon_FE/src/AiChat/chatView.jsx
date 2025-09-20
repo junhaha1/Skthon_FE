@@ -68,18 +68,23 @@ function ChatView({ onBack }) {
               const content = parsed.choices?.[0]?.delta?.content;
 
               if (content) {
-                // ✅ 델타(chunk)를 마지막 메시지에만 추가
-                setMessages(prev => {
-                  const newMessages = [...prev];
-                  const lastIndex = newMessages.length - 1;
-                  if (newMessages[lastIndex].role === 'ai') {
-                    newMessages[lastIndex] = {
-                      ...newMessages[lastIndex],
-                      content: newMessages[lastIndex].content + content,
-                    };
-                  }
-                  return newMessages;
-                });
+                // ✅ 글자 단위로 느리게 추가
+                for (let i = 0; i < content.length; i++) {
+                  const char = content[i];
+                  await new Promise(res => setTimeout(res, 50)); // 50ms 딜레이 (원하는 속도 조절)
+
+                  setMessages(prev => {
+                    const newMessages = [...prev];
+                    const lastIndex = newMessages.length - 1;
+                    if (newMessages[lastIndex].role === 'ai') {
+                      newMessages[lastIndex] = {
+                        ...newMessages[lastIndex],
+                        content: newMessages[lastIndex].content + char,
+                      };
+                    }
+                    return newMessages;
+                  });
+                }
               }
             } catch (e) {
               console.error('JSON 파싱 오류:', e, '데이터:', data);
