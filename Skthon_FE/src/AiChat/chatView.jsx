@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
 import SummaryModal from '../components/SummaryModal';
+import { useAssignment } from '../contexts/AssignmentContext';
 
 function ChatView() {
+  const { activeTabId, getActiveTab, updateTabMessages } = useAssignment();
   const [messages, setMessages] = useState([
     { role: 'ai', content: '안녕하세요! 무엇을 도와드릴까요?' }
   ]);
@@ -13,6 +15,18 @@ function ChatView() {
   const [summaryContent, setSummaryContent] = useState('');
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // 활성 탭이 변경될 때 메시지 업데이트
+  useEffect(() => {
+    if (activeTabId) {
+      const activeTab = getActiveTab();
+      if (activeTab) {
+        setMessages(activeTab.messages);
+      }
+    } else {
+      setMessages([{ role: 'ai', content: '안녕하세요! 무엇을 도와드릴까요?' }]);
+    }
+  }, [activeTabId, getActiveTab]);
 
   // 메시지 추가 시 자동 스크롤
   useEffect(() => {
@@ -32,18 +46,39 @@ function ChatView() {
     // 사용자 메시지 추가
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
+    
+    // 탭의 메시지 업데이트
+    if (activeTabId) {
+      updateTabMessages(activeTabId, updatedMessages);
+    }
 
     // AI 응답 메시지 초기화
     const aiMessage = { role: 'ai', content: '' };
-    setMessages(prev => [...prev, aiMessage]);
+    const messagesWithAI = [...updatedMessages, aiMessage];
+    setMessages(messagesWithAI);
+    
+    // 탭의 메시지 업데이트
+    if (activeTabId) {
+      updateTabMessages(activeTabId, messagesWithAI);
+    }
 
-    try {
-      const preContent =
-        messages.length > 1
-          ? messages.slice(0, -1).map(msg => `${msg.role}: ${msg.content}`).join('\n')
-          : null;
+        try {
+          const preContent =
+            messages.length > 1
+              ? messages.slice(0, -1).map(msg => `${msg.role}: ${msg.content}`).join('\n')
+              : null;
 
-      const response = await ApiClient.streamAnswer(currentInput, preContent);
+          // 현재 탭의 assignment 내용을 문자열로 변환
+          const assignmentContent = currentAssignment ? 
+            `과제 제목: ${currentAssignment.title}\n` +
+            `과제 내용: ${currentAssignment.content}\n` +
+            `시작일: ${currentAssignment.startAt || '미정'}\n` +
+            `마감일: ${currentAssignment.endAt || '미정'}\n` +
+            `관리자: ${currentAssignment.adminName}\n` +
+            `관리자 이메일: ${currentAssignment.adminEmail}`
+            : null;
+
+          const response = await ApiClient.streamAnswer(currentInput, preContent, assignmentContent);
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
@@ -86,6 +121,12 @@ function ChatView() {
                         content: newMessages[lastIndex].content + char,
                       };
                     }
+                    
+                    // 탭의 메시지 업데이트
+                    if (activeTabId) {
+                      updateTabMessages(activeTabId, newMessages);
+                    }
+                    
                     return newMessages;
                   });
                 }
@@ -126,6 +167,12 @@ function ChatView() {
       return;
     }
 
+    const activeTab = getActiveTab();
+    if (!activeTab || !activeTab.assignment) {
+      alert('과제 정보를 찾을 수 없습니다. 다시 시도해주세요.');
+      return;
+    }
+
     setIsSummaryLoading(true);
     setIsSummaryModalOpen(true);
 
@@ -135,10 +182,12 @@ function ChatView() {
       const totalContent = messages
         .map(msg => `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}`)
         .join('');
-      console.log(totalContent);
-      // API 호출 (assignmentId는 2로 고정)
-      const summary = await ApiClient.summaryChat(2, totalContent);
-      console.log(summary);
+      console.log('Assignment ID:', activeTab.assignment.id);
+      console.log('Total Content:', totalContent);
+      
+      // API 호출 (실제 assignment ID 사용)
+      const summary = await ApiClient.summaryChat(activeTab.assignment.id, totalContent);
+      console.log('Summary:', summary);
       setSummaryContent(summary);
     } catch (error) {
       console.error('요약 생성 실패:', error);
@@ -148,8 +197,39 @@ function ChatView() {
     }
   };
 
+  // 현재 탭의 assignment 정보 가져오기
+  const activeTab = getActiveTab();
+  const currentAssignment = activeTab?.assignment;
+
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
+      
+      {/* Assignment 정보 헤더 */}
+      {currentAssignment && (
+        <div className="bg-white border-b border-blue-200 p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xs">📋</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-800 truncate">
+                {currentAssignment.title}
+              </h3>
+              <p className="text-xs text-gray-500 truncate">
+                ID: {currentAssignment.id} | 관리자: {currentAssignment.adminName}
+              </p>
+            </div>
+            <div className="text-xs text-gray-400 flex-shrink-0">
+              {currentAssignment.startAt && (
+                <span>
+                  {new Date(currentAssignment.startAt).toLocaleDateString('ko-KR')} ~ 
+                  {currentAssignment.endAt ? new Date(currentAssignment.endAt).toLocaleDateString('ko-KR') : '마감일 미정'}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">

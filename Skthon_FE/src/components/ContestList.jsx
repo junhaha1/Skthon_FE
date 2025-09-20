@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
+import AssignmentDetailModal from './AssignmentDetailModal';
 
 const ContestList = () => {
   const [assignments, setAssignments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAssignments();
@@ -45,6 +48,18 @@ const ContestList = () => {
     const endDate = new Date(endAt);
     const now = new Date();
     return endDate < now;
+  };
+
+  // 상세보기 모달 열기
+  const handleAssignmentClick = (assignmentId) => {
+    setSelectedAssignmentId(assignmentId);
+    setIsDetailModalOpen(true);
+  };
+
+  // 상세보기 모달 닫기
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedAssignmentId(null);
   };
 
   // 로딩 상태 표시
@@ -146,7 +161,11 @@ const ContestList = () => {
           </div>
         ) : (
           assignments.map((assignment) => (
-            <div key={assignment.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100">
+            <div 
+              key={assignment.id} 
+              className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100 cursor-pointer"
+              onClick={() => handleAssignmentClick(assignment.id)}
+            >
               {/* 이미지 */}
               <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                 {assignment.assignImage ? (
@@ -219,6 +238,10 @@ const ContestList = () => {
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                   disabled={assignment.endCheck || isExpired(assignment.endAt)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAssignmentClick(assignment.id);
+                  }}
                 >
                   {assignment.endCheck || isExpired(assignment.endAt) ? '마감된 과제' : '자세히 보기'}
                 </button>
@@ -236,6 +259,13 @@ const ContestList = () => {
           </button>
         </div>
       )}
+
+      {/* 과제 상세보기 모달 */}
+      <AssignmentDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+        assignmentId={selectedAssignmentId}
+      />
     </div>
   );
 };

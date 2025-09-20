@@ -2,10 +2,11 @@ class ApiClient {
   static baseURL = 'https://skthonbe-production.up.railway.app';
 
   // 스트리밍 답변 요청
-  static async streamAnswer(question, preContent = null) {
+  static async streamAnswer(question, preContent = null, assignmentContent = null) {
     const requestBody = {
       question: question,
-      preContent: preContent
+      preContent: preContent,
+      assignmentContent: assignmentContent
     };
 
     const response = await fetch(`${this.baseURL}/answer/stream`, {
@@ -145,6 +146,23 @@ class ApiClient {
     return response.json();
   }
 
+  // 과제 단건 조회 API
+  static async getAssignmentById(id) {
+    const response = await fetch(`${this.baseURL}/assignments/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 대화 내용 요약 API
   static async summaryChat(assignmentId, totalContent) {
     const requestBody = {
@@ -155,8 +173,7 @@ class ApiClient {
     const response = await fetch(`${this.baseURL}/answer/summaryChat`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer dummy-token' // 의미없는 토큰이지만 백엔드 스펙에 맞춰 추가
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestBody)
     });

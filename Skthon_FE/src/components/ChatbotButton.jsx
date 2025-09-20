@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatView from '../AiChat/chatView';
+import { useAssignment } from '../contexts/AssignmentContext';
 
 const ChatbotButton = () => {
+  const { chatbotTabs, activeTabId, setActiveTab, closeChatbotTab } = useAssignment();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
   };
+
+  // 전역 이벤트 리스너 추가
+  useEffect(() => {
+    const handleOpenChatbot = () => {
+      setIsOpen(true);
+    };
+
+    window.addEventListener('openChatbot', handleOpenChatbot);
+    
+    return () => {
+      window.removeEventListener('openChatbot', handleOpenChatbot);
+    };
+  }, []);
 
   return (
     <>
@@ -46,7 +61,7 @@ const ChatbotButton = () => {
           ></div>
           
           {/* 챗봇 모달 컨텐츠 */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] mx-4 overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] mx-4 overflow-hidden flex flex-col">
             {/* 모달 헤더 */}
             <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -68,8 +83,49 @@ const ChatbotButton = () => {
               </button>
             </div>
 
+            {/* 탭 시스템 */}
+            {chatbotTabs.length > 0 && (
+              <div className="bg-gray-100 border-b border-gray-200">
+                <div className="flex overflow-x-auto">
+                  {chatbotTabs.map((tab) => (
+                        <div
+                          key={tab.id}
+                          className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                            activeTabId === tab.id
+                              ? 'border-blue-600 bg-white text-blue-600'
+                              : 'border-transparent text-gray-600 hover:text-gray-800'
+                          }`}
+                          onClick={() => setActiveTab(tab.id)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium truncate max-w-32">
+                              {tab.assignmentTitle}
+                            </span>
+                            {tab.assignment && (
+                              <span className="text-xs text-gray-500 truncate max-w-32">
+                                ID: {tab.assignment.id} | {tab.assignment.adminName}
+                              </span>
+                            )}
+                          </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeChatbotTab(tab.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* 챗봇 컨텐츠 */}
-            <div className="h-full">
+            <div className="flex-1 overflow-hidden">
               <ChatView />
             </div>
           </div>

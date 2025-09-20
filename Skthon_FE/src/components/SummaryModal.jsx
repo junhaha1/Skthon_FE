@@ -1,6 +1,10 @@
 import React from 'react';
+import { useAssignment } from '../contexts/AssignmentContext';
 
 const SummaryModal = ({ isOpen, onClose, summaryContent, isLoading }) => {
+  const { getActiveTab } = useAssignment();
+  const activeTab = getActiveTab();
+  const currentAssignment = activeTab?.assignment;
   if (!isOpen) return null;
 
   return (
@@ -12,7 +16,7 @@ const SummaryModal = ({ isOpen, onClose, summaryContent, isLoading }) => {
       ></div>
       
       {/* 모달 컨텐츠 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] mx-4 overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] mx-4 overflow-hidden flex flex-col">
         {/* 모달 헤더 */}
         <div className="bg-blue-600 text-white p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -23,7 +27,14 @@ const SummaryModal = ({ isOpen, onClose, summaryContent, isLoading }) => {
             </div>
             <div>
               <h3 className="text-xl font-semibold">제안서 요약</h3>
-              <p className="text-blue-100 text-sm">AI가 생성한 제안서 요약본입니다</p>
+              <p className="text-blue-100 text-sm">
+                {currentAssignment ? `"${currentAssignment.title}" 과제 제안서` : 'AI가 생성한 제안서 요약본입니다'}
+              </p>
+              {currentAssignment && (
+                <p className="text-blue-200 text-xs">
+                  과제 ID: {currentAssignment.id} | 관리자: {currentAssignment.adminName}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -37,7 +48,7 @@ const SummaryModal = ({ isOpen, onClose, summaryContent, isLoading }) => {
         </div>
 
         {/* 모달 컨텐츠 */}
-        <div className="h-full overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">

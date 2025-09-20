@@ -96,7 +96,7 @@ const LoginModal = ({ isOpen, onClose }) => {
       ></div>
       
       {/* 모달 컨텐츠 */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 max-h-[90vh] overflow-y-auto">
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import WelcomeScreen from "./components/WelcomeScreen";
 import MainCommunity from "./components/MainCommunity";
 import { AuthProvider } from "./contexts/AuthContext";
+import { AssignmentProvider } from "./contexts/AssignmentContext";
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -12,10 +13,12 @@ function App() {
 
   return (
     <AuthProvider>
-      <div className="App">
-        {showWelcome && <WelcomeScreen onTransitionComplete={handleTransitionComplete} />}
-        {!showWelcome && <MainCommunity />}
-      </div>
+      <AssignmentProvider>
+        <div className="App">
+          {showWelcome && <WelcomeScreen onTransitionComplete={handleTransitionComplete} />}
+          {!showWelcome && <MainCommunity />}
+        </div>
+      </AssignmentProvider>
     </AuthProvider>
   );
 }
