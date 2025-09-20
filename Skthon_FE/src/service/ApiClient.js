@@ -128,6 +128,23 @@ class ApiClient {
     }
   }
 
+  // 과제 전체 조회 API
+  static async getAllAssignments() {
+    const response = await fetch(`${this.baseURL}/assignments`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);

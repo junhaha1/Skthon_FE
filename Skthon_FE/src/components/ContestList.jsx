@@ -1,69 +1,86 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import ApiClient from '../service/ApiClient';
 
 const ContestList = () => {
-  // 샘플 공모전 데이터
-  const contests = [
-    {
-      id: 1,
-      title: "2024 창업 아이디어 공모전",
-      organization: "한국창업진흥원",
-      deadline: "2024-03-15",
-      prize: "총 상금 1억원",
-      category: "창업",
-      participants: 1250,
-      image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=창업+공모전"
-    },
-    {
-      id: 2,
-      title: "디지털 혁신 아이디어 공모전",
-      organization: "과학기술정보통신부",
-      deadline: "2024-03-20",
-      prize: "총 상금 5천만원",
-      category: "기술",
-      participants: 890,
-      image: "https://via.placeholder.com/300x200/1E40AF/FFFFFF?text=디지털+혁신"
-    },
-    {
-      id: 3,
-      title: "청년 사회혁신 프로젝트",
-      organization: "청년정책부",
-      deadline: "2024-03-25",
-      prize: "총 상금 3천만원",
-      category: "사회",
-      participants: 650,
-      image: "https://via.placeholder.com/300x200/2563EB/FFFFFF?text=사회혁신"
-    },
-    {
-      id: 4,
-      title: "환경보호 캠페인 공모전",
-      organization: "환경부",
-      deadline: "2024-03-30",
-      prize: "총 상금 2천만원",
-      category: "환경",
-      participants: 420,
-      image: "https://via.placeholder.com/300x200/1D4ED8/FFFFFF?text=환경보호"
-    },
-    {
-      id: 5,
-      title: "문화콘텐츠 창작 공모전",
-      organization: "문화체육관광부",
-      deadline: "2024-04-05",
-      prize: "총 상금 4천만원",
-      category: "문화",
-      participants: 780,
-      image: "https://via.placeholder.com/300x200/1E3A8A/FFFFFF?text=문화콘텐츠"
-    },
-    {
-      id: 6,
-      title: "스마트시티 솔루션 공모전",
-      organization: "국토교통부",
-      deadline: "2024-04-10",
-      prize: "총 상금 6천만원",
-      category: "도시",
-      participants: 950,
-      image: "https://via.placeholder.com/300x200/1E40AF/FFFFFF?text=스마트시티"
+  const [assignments, setAssignments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchAssignments();
+  }, []);
+
+  const fetchAssignments = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      const response = await ApiClient.getAllAssignments();
+      setAssignments(response.data || []);
+    } catch (error) {
+      console.error('과제 조회 실패:', error);
+      setError('과제를 불러오는데 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  // 날짜 포맷팅 함수
+  const formatDate = (dateString) => {
+    if (!dateString) return '날짜 미정';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // 마감 상태 확인
+  const isExpired = (endAt) => {
+    if (!endAt) return false;
+    const endDate = new Date(endAt);
+    const now = new Date();
+    return endDate < now;
+  };
+
+  // 로딩 상태 표시
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">과제를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <div className="mb-4">
+            <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">과제를 불러올 수 없습니다</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchAssignments}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getCategoryColor = (category) => {
     const colors = {
@@ -82,10 +99,10 @@ const ContestList = () => {
       {/* 페이지 헤더 */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">
-          인기 공모전
+          과제 목록
         </h2>
         <p className="text-gray-600">
-          다양한 분야의 공모전을 확인하고 참여해보세요
+          다양한 과제를 확인하고 참여해보세요
         </p>
       </div>
 
@@ -115,73 +132,110 @@ const ContestList = () => {
         </div>
       </div>
 
-      {/* 공모전 그리드 */}
+      {/* 과제 그리드 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {contests.map((contest) => (
-          <div key={contest.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100">
-            {/* 이미지 */}
-            <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">
-                    {contest.category.charAt(0)}
-                  </span>
-                </div>
-                <p className="text-blue-600 font-medium">{contest.category}</p>
-              </div>
+        {assignments.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             </div>
-
-            {/* 콘텐츠 */}
-            <div className="p-6">
-              <div className="mb-3">
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(contest.category)}`}>
-                  {contest.category}
-                </span>
-              </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
-                {contest.title}
-              </h3>
-              
-              <p className="text-gray-600 mb-4">
-                {contest.organization}
-              </p>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm text-gray-500">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  마감: {contest.deadline}
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                  {contest.prize}
-                </div>
-                <div className="flex items-center text-sm text-gray-500">
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  참여자 {contest.participants.toLocaleString()}명
-                </div>
-              </div>
-
-              <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-                자세히 보기
-              </button>
-            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 과제가 없습니다</h3>
+            <p className="text-gray-600">새로운 과제가 등록되면 여기에 표시됩니다.</p>
           </div>
-        ))}
+        ) : (
+          assignments.map((assignment) => (
+            <div key={assignment.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-gray-100">
+              {/* 이미지 */}
+              <div className="h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                {assignment.assignImage ? (
+                  <img 
+                    src={`data:image/jpeg;base64,${assignment.assignImage}`} 
+                    alt={assignment.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-blue-600 font-medium">과제</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 콘텐츠 */}
+              <div className="p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="inline-block px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    과제
+                  </span>
+                  {assignment.endCheck && (
+                    <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      마감됨
+                    </span>
+                  )}
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
+                  {assignment.title}
+                </h3>
+                
+                <p className="text-gray-600 mb-4 line-clamp-3">
+                  {assignment.content}
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    시작: {formatDate(assignment.startAt)}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    마감: {formatDate(assignment.endAt)}
+                    {isExpired(assignment.endAt) && (
+                      <span className="ml-2 text-red-500 font-medium">(마감됨)</span>
+                    )}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    작성자: {assignment.adminName}
+                  </div>
+                </div>
+
+                <button 
+                  className={`w-full py-3 rounded-lg transition-colors duration-200 font-medium ${
+                    assignment.endCheck || isExpired(assignment.endAt)
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                  disabled={assignment.endCheck || isExpired(assignment.endAt)}
+                >
+                  {assignment.endCheck || isExpired(assignment.endAt) ? '마감된 과제' : '자세히 보기'}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* 더보기 버튼 */}
-      <div className="text-center mt-8">
-        <button className="px-8 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors duration-200 font-medium">
-          더 많은 공모전 보기
-        </button>
-      </div>
+      {assignments.length > 0 && (
+        <div className="text-center mt-8">
+          <button className="px-8 py-3 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors duration-200 font-medium">
+            더 많은 과제 보기
+          </button>
+        </div>
+      )}
     </div>
   );
 };

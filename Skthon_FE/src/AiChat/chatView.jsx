@@ -116,19 +116,7 @@ function ChatView() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* 헤더 */}
-      <div className="bg-white shadow-lg p-6 border-b border-blue-200 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">AI</span>
-          </div>
-          <h1 className="text-3xl font-semibold text-gray-800">AI 챗봇</h1>
-        </div>
-        <div className="text-lg text-gray-500">
-          AI 챗봇 서비스
-        </div>
-      </div>
+    <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100">
 
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
