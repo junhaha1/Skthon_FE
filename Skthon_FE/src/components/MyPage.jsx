@@ -127,30 +127,32 @@ const MyPage = () => {
     }
   }, [user?.id, user?.userType]);
 
-  // 채택 상태에 따른 스타일 반환
+  // 채택 상태에 따른 스타일 반환 (다양한 형태 지원)
   const getSelectedStatusStyle = (selected) => {
-    switch (selected) {
-      case 'SELECTED':
-        return 'bg-green-100 text-green-800';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800';
-      case 'PENDING':
-      default:
-        return 'bg-yellow-100 text-yellow-800';
+    if (selected === null || selected === undefined || selected === '' || selected === 'PENDING') {
+      return 'bg-yellow-100 text-yellow-800';
     }
+    if (selected === true || selected === 'true' || selected === 'SELECTED') {
+      return 'bg-green-100 text-green-800';
+    }
+    if (selected === false || selected === 'false' || selected === 'REJECTED') {
+      return 'bg-red-100 text-red-800';
+    }
+    return 'bg-yellow-100 text-yellow-800';
   };
 
-  // 채택 상태 한글 변환
+  // 채택 상태 한글 변환 (다양한 형태 지원)
   const getSelectedStatusText = (selected) => {
-    switch (selected) {
-      case 'SELECTED':
-        return '채택됨';
-      case 'REJECTED':
-        return '미채택';
-      case 'PENDING':
-      default:
-        return '검토중';
+    if (selected === null || selected === undefined || selected === '' || selected === 'PENDING') {
+      return '진행중';
     }
+    if (selected === true || selected === 'true' || selected === 'SELECTED') {
+      return '채택됨';
+    }
+    if (selected === false || selected === 'false' || selected === 'REJECTED') {
+      return '미채택';
+    }
+    return '진행중';
   };
 
   // 제안서 상세보기 모달 열기

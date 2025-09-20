@@ -57,30 +57,32 @@ const ProposalListModal = ({ isOpen, onClose, assignmentId, assignmentTitle }) =
     setIsDetailModalOpen(false);
   };
 
-  // 채택 상태 스타일
+  // 채택 상태 스타일 (다양한 형태 지원)
   const getSelectedStatusStyle = (selected) => {
-    switch (selected) {
-      case 'SELECTED':
-        return 'bg-green-100 text-green-800';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800';
-      case 'PENDING':
-      default:
-        return 'bg-yellow-100 text-yellow-800';
+    if (selected === null || selected === undefined || selected === '' || selected === 'PENDING') {
+      return 'bg-yellow-100 text-yellow-800';
     }
+    if (selected === true || selected === 'true' || selected === 'SELECTED') {
+      return 'bg-green-100 text-green-800';
+    }
+    if (selected === false || selected === 'false' || selected === 'REJECTED') {
+      return 'bg-red-100 text-red-800';
+    }
+    return 'bg-yellow-100 text-yellow-800';
   };
 
-  // 채택 상태 텍스트
+  // 채택 상태 텍스트 (다양한 형태 지원)
   const getSelectedStatusText = (selected) => {
-    switch (selected) {
-      case 'SELECTED':
-        return '채택';
-      case 'REJECTED':
-        return '거절';
-      case 'PENDING':
-      default:
-        return '검토중';
+    if (selected === null || selected === undefined || selected === '' || selected === 'PENDING') {
+      return '진행중';
     }
+    if (selected === true || selected === 'true' || selected === 'SELECTED') {
+      return '채택';
+    }
+    if (selected === false || selected === 'false' || selected === 'REJECTED') {
+      return '거절';
+    }
+    return '진행중';
   };
 
   if (!isOpen) return null;
@@ -200,6 +202,7 @@ const ProposalListModal = ({ isOpen, onClose, assignmentId, assignmentTitle }) =
         isOpen={isDetailModalOpen}
         onClose={handleCloseDetailModal}
         proposal={selectedProposal}
+        onUpdate={fetchProposals}
       />
     </div>
   );

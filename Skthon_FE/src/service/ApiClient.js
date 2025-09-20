@@ -353,6 +353,23 @@ static async summaryChat(assignmentId, totalContent) {
     return response.json();
   }
 
+  // 제안서 채택 여부 수정
+  static async updateProposalSelected(proposalId, selected) {
+    const response = await fetch(`${this.baseURL}/proposals/${proposalId}/selected?selected=${selected}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);
