@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import ApiClient from '../service/ApiClient';
+import CompanySelectionModal from './CompanySelectionModal';
 
 const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
+    companyId: '',
+    companyName: ''
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [registerError, setRegisterError] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [userType, setUserType] = useState('user'); // 'user' 또는 'company'
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -26,6 +31,34 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
         [name]: ''
       }));
     }
+  };
+
+  // 사용자 타입 변경
+  const handleUserTypeChange = (type) => {
+    setUserType(type);
+    // 기업 선택 시 기업 정보 초기화
+    if (type === 'user') {
+      setFormData(prev => ({
+        ...prev,
+        companyId: '',
+        companyName: ''
+      }));
+    }
+  };
+
+  // 기업 선택 모달 열기
+  const handleOpenCompanyModal = () => {
+    setShowCompanyModal(true);
+  };
+
+  // 기업 선택
+  const handleSelectCompany = (company) => {
+    setFormData(prev => ({
+      ...prev,
+      companyId: company.id,
+      companyName: company.name
+    }));
+    setShowCompanyModal(false);
   };
 
   const validateForm = () => {
@@ -58,6 +91,11 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
     } else if (formData.name.length < 2) {
       newErrors.name = '이름은 2자 이상이어야 합니다';
     }
+
+    // 기업 사용자인 경우 기업 선택 검증
+    if (userType === 'company' && !formData.companyId) {
+      newErrors.company = '소속 기업을 선택해주세요';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -70,11 +108,28 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        const response = await ApiClient.register(
-          formData.email, 
-          formData.password, 
-          formData.name
-        );
+        let response;
+        
+        // 사용자 타입에 따라 다른 API 호출
+        if (userType === 'company') {
+          // 기업 회원가입
+          const adminData = {
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+            companyId: parseInt(formData.companyId)
+          };
+          
+          console.log('기업 회원가입 요청 데이터:', adminData);
+          response = await ApiClient.registerAdmin(adminData);
+        } else {
+          // 개인 회원가입
+          response = await ApiClient.register(
+            formData.email, 
+            formData.password, 
+            formData.name
+          );
+        }
         
         // 회원가입 성공 처리
         console.log('회원가입 성공:', response);
@@ -89,8 +144,12 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
             email: '',
             password: '',
             confirmPassword: '',
-            name: ''
+            name: '',
+            companyId: '',
+            companyName: ''
           });
+          setUserType('user');
+          setShowCompanyModal(false);
         }, 2000);
         
       } catch (error) {
@@ -142,7 +201,9 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
               <svg className="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <p className="text-sm text-green-600">회원가입이 완료되었습니다!</p>
+               <p className="text-sm text-green-600">
+                 {userType === 'company' ? '기업 회원가입이 완료되었습니다!' : '회원가입이 완료되었습니다!'}
+               </p>
             </div>
           </div>
         )}
@@ -158,6 +219,45 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
             </div>
           </div>
         )}
+
+        {/* 사용자 타입 선택 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-3">회원 유형</label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleUserTypeChange('user')}
+              className={`p-3 rounded-lg border-2 transition-colors duration-200 ${
+                userType === 'user'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="text-center">
+                <svg className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-sm font-medium">개인 회원</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleUserTypeChange('company')}
+              className={`p-3 rounded-lg border-2 transition-colors duration-200 ${
+                userType === 'company'
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="text-center">
+                <svg className="w-6 h-6 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="text-sm font-medium">기업 회원</span>
+              </div>
+            </button>
+          </div>
+        </div>
 
         {/* 회원가입 폼 */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -181,6 +281,36 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
               <p className="mt-1 text-sm text-red-600">{errors.name}</p>
             )}
           </div>
+
+          {/* 기업 선택 (기업 회원인 경우만) */}
+          {userType === 'company' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                소속 기업
+              </label>
+              <button
+                type="button"
+                onClick={handleOpenCompanyModal}
+                className={`w-full px-4 py-3 border rounded-lg text-left transition-colors ${
+                  errors.company ? 'border-red-300' : 'border-gray-300'
+                } ${formData.companyName ? 'bg-white' : 'bg-gray-50'}`}
+              >
+                {formData.companyName ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-900">{formData.companyName}</span>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                ) : (
+                  <span className="text-gray-500">기업을 선택해주세요</span>
+                )}
+              </button>
+              {errors.company && (
+                <p className="mt-1 text-sm text-red-600">{errors.company}</p>
+              )}
+            </div>
+          )}
 
           {/* 이메일 입력 */}
           <div>
@@ -299,6 +429,13 @@ const RegisterModal = ({ isOpen, onClose, onLoginClick }) => {
           </p>
         </div>
       </div>
+
+      {/* 기업 선택 모달 */}
+      <CompanySelectionModal
+        isOpen={showCompanyModal}
+        onClose={() => setShowCompanyModal(false)}
+        onSelectCompany={handleSelectCompany}
+      />
     </div>
   );
 };

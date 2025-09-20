@@ -370,6 +370,41 @@ static async summaryChat(assignmentId, totalContent) {
     return response.json();
   }
 
+  // 전체 기업 목록 조회
+  static async getAllCompanies() {
+    const response = await fetch(`${this.baseURL}/companies`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 기업 회원가입
+  static async registerAdmin(adminData) {
+    const response = await fetch(`${this.baseURL}/register/admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(adminData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);
