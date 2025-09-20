@@ -71,7 +71,7 @@ function ChatView({ onBack }) {
                 // ✅ 글자 단위로 느리게 추가
                 for (let i = 0; i < content.length; i++) {
                   const char = content[i];
-                  await new Promise(res => setTimeout(res, 50)); // 50ms 딜레이 (원하는 속도 조절)
+                  await new Promise(res => setTimeout(res, 10)); // 50ms 딜레이 (원하는 속도 조절)
 
                   setMessages(prev => {
                     const newMessages = [...prev];
