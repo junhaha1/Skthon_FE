@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
+import SummaryModal from '../components/SummaryModal';
 
 function ChatView() {
   const [messages, setMessages] = useState([
@@ -8,6 +9,9 @@ function ChatView() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [summaryContent, setSummaryContent] = useState('');
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
   // 메시지 추가 시 자동 스크롤
@@ -115,6 +119,35 @@ function ChatView() {
     }
   };
 
+  // 대화 내용을 요약하여 제안서 생성
+  const generateSummary = async () => {
+    if (messages.length <= 1) {
+      alert('대화 내용이 충분하지 않습니다. 먼저 AI와 대화를 나눠보세요.');
+      return;
+    }
+
+    setIsSummaryLoading(true);
+    setIsSummaryModalOpen(true);
+
+    try {
+      console.log(messages);
+      // 모든 대화 내용을 텍스트로 변환
+      const totalContent = messages
+        .map(msg => `${msg.role === 'user' ? '사용자' : 'AI'}: ${msg.content}`)
+        .join('');
+      console.log(totalContent);
+      // API 호출 (assignmentId는 2로 고정)
+      const summary = await ApiClient.summaryChat(2, totalContent);
+      console.log(summary);
+      setSummaryContent(summary);
+    } catch (error) {
+      console.error('요약 생성 실패:', error);
+      setSummaryContent('요약 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100">
 
@@ -156,37 +189,75 @@ function ChatView() {
 
       {/* 입력 영역 */}
       <div className="bg-white shadow-lg p-8 border-t border-blue-200">
-        <div className="flex gap-6 items-end max-w-6xl mx-auto">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="메시지를 입력하세요..."
-              className="w-full bg-gray-50 text-gray-800 px-6 py-4 rounded-2xl border border-blue-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors shadow-sm text-lg"
-            />
+        <div className="max-w-6xl mx-auto">
+          {/* 제안서 만들기 버튼 */}
+          <div className="mb-4 flex justify-center">
+            <button
+              onClick={generateSummary}
+              disabled={messages.length <= 1 || isSummaryLoading}
+              className={`px-6 py-3 rounded-xl transition-all duration-200 shadow-md font-medium ${
+                messages.length <= 1 || isSummaryLoading
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-lg transform hover:scale-105'
+              }`}
+            >
+              {isSummaryLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>생성 중...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span>제안서 만들기</span>
+                </div>
+              )}
+            </button>
           </div>
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || input.trim() === ''}
-            className={`px-8 py-4 rounded-2xl transition-all duration-200 shadow-md text-lg ${
-              isLoading || input.trim() === ''
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transform hover:scale-105'
-            }`}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span className="font-medium">전송 중...</span>
-              </div>
-            ) : (
-              <span className="font-medium">전송</span>
-            )}
-          </button>
+
+          {/* 입력 필드와 전송 버튼 */}
+          <div className="flex gap-6 items-end">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="메시지를 입력하세요..."
+                className="w-full bg-gray-50 text-gray-800 px-6 py-4 rounded-2xl border border-blue-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors shadow-sm text-lg"
+              />
+            </div>
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || input.trim() === ''}
+              className={`px-8 py-4 rounded-2xl transition-all duration-200 shadow-md text-lg ${
+                isLoading || input.trim() === ''
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transform hover:scale-105'
+              }`}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span className="font-medium">전송 중...</span>
+                </div>
+              ) : (
+                <span className="font-medium">전송</span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* 요약 모달 */}
+      <SummaryModal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        summaryContent={summaryContent}
+        isLoading={isSummaryLoading}
+      />
     </div>
   );
 }

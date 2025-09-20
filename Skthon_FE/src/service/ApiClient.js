@@ -145,6 +145,30 @@ class ApiClient {
     return response.json();
   }
 
+  // 대화 내용 요약 API
+  static async summaryChat(assignmentId, totalContent) {
+    const requestBody = {
+      assignmentId: assignmentId,
+      totalContent: totalContent
+    };
+
+    const response = await fetch(`${this.baseURL}/answer/summaryChat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer dummy-token' // 의미없는 토큰이지만 백엔드 스펙에 맞춰 추가
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.text(); // 응답이 JSON이 아닌 텍스트 형태
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);
