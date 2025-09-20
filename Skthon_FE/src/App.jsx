@@ -1,23 +1,40 @@
-import './App.css'
+import React, { useState } from "react";
 
 function App() {
+  const [testResult, setTestResult] = useState("");
+
+  const handleTestButton = async () => {
+    try {
+      const response = await fetch("https://skthonbe-production.up.railway.app/test");
+      const data = await response.text();
+      setTestResult(data);
+    } catch (error) {
+      console.error("API 호출 오류:", error);
+      setTestResult("오류가 발생했습니다.");
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
-        셰어하우스 피그마 디자인
-      </h1>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <iframe 
-          style={{ border: '1px solid rgba(0, 0, 0, 0.1)', borderRadius: '8px' }} 
-          width="800" 
-          height="450" 
-          src="https://embed.figma.com/design/p28BUEV2HOilQhfAAdxvH4/%EC%89%90%EC%96%B4%ED%95%98%EC%9A%B0%EC%8A%A4-%ED%94%BC%EA%B7%B8%EB%A7%88?node-id=26-50&embed-host=share" 
-          allowFullScreen
-          title="셰어하우스 피그마 디자인"
-        />
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6 text-center">API 테스트</h1>
+        
+        <button
+          onClick={handleTestButton}
+          className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+        >
+          테스트 버튼
+        </button>
+        
+        {testResult && (
+          <div className="mt-4 p-4 bg-gray-100 rounded">
+            <h3 className="font-semibold mb-2">API 응답:</h3>
+            <p className="text-lg">{testResult}</p>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
