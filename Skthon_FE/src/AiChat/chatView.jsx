@@ -14,6 +14,8 @@ function ChatView() {
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryContent, setSummaryContent] = useState('');
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [isAssignmentInfoExpanded, setIsAssignmentInfoExpanded] = useState(false);
+  const [showFindAssignmentMessage, setShowFindAssignmentMessage] = useState(false);
   const messagesEndRef = useRef(null);
 
   // 활성 탭이 변경될 때 메시지 업데이트
@@ -22,9 +24,21 @@ function ChatView() {
       const activeTab = getActiveTab();
       if (activeTab) {
         setMessages(activeTab.messages);
+        // 공모전이 존재하지 않는 경우 확인
+        if (!activeTab.assignment) {
+          setShowFindAssignmentMessage(true);
+        } else {
+          setShowFindAssignmentMessage(false);
+        }
+      } else {
+        // 탭이 존재하지 않는 경우
+        setMessages([]);
+        setShowFindAssignmentMessage(false);
       }
     } else {
-      setMessages([{ role: 'ai', content: '안녕하세요! 무엇을 도와드릴까요?' }]);
+      // activeTabId가 없는 경우 (탭이 전혀 없는 상태)
+      setMessages([]);
+      setShowFindAssignmentMessage(false);
     }
   }, [activeTabId, getActiveTab]);
 
@@ -206,33 +220,92 @@ function ChatView() {
       
       {/* Assignment 정보 헤더 */}
       {currentAssignment && (
-        <div className="bg-white border-b border-blue-200 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs">📋</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-gray-800 truncate">
-                {currentAssignment.title}
-              </h3>
-              <p className="text-xs text-gray-500 truncate">
-                ID: {currentAssignment.id} | 관리자: {currentAssignment.adminName}
-              </p>
-            </div>
-            <div className="text-xs text-gray-400 flex-shrink-0">
-              {currentAssignment.startAt && (
-                <span>
-                  {new Date(currentAssignment.startAt).toLocaleDateString('ko-KR')} ~ 
-                  {currentAssignment.endAt ? new Date(currentAssignment.endAt).toLocaleDateString('ko-KR') : '마감일 미정'}
-                </span>
-              )}
+        <div className="bg-white border-b border-blue-200 shadow-sm">
+          {/* 클릭 가능한 헤더 */}
+          <div 
+            className="p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => setIsAssignmentInfoExpanded(!isAssignmentInfoExpanded)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs">📋</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-gray-800 truncate">
+                  {currentAssignment.title}
+                </h3>
+                <p className="text-xs text-gray-500 truncate">
+                  ID: {currentAssignment.id} | 관리자: {currentAssignment.adminName}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-gray-400 flex-shrink-0">
+                  {currentAssignment.startAt && (
+                    <span>
+                      {new Date(currentAssignment.startAt).toLocaleDateString('ko-KR')} ~ 
+                      {currentAssignment.endAt ? new Date(currentAssignment.endAt).toLocaleDateString('ko-KR') : '마감일 미정'}
+                    </span>
+                  )}
+                </div>
+                <svg 
+                  className={`w-4 h-4 text-gray-400 transition-transform ${isAssignmentInfoExpanded ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
+          
+          {/* 확장 가능한 상세 정보 */}
+          {isAssignmentInfoExpanded && (
+            <div className="px-3 pb-3 border-t border-gray-100">
+              <div className="pt-3">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">과제 상세 정보</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p><span className="font-medium">과제 내용:</span> {currentAssignment.content}</p>
+                  <p><span className="font-medium">관리자 이메일:</span> {currentAssignment.adminEmail}</p>
+                  <p><span className="font-medium">마감 상태:</span> {currentAssignment.endCheck ? '마감됨' : '진행중'}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
+        {/* 탭이 없을 때 공모전 찾으러 가기 메시지 */}
+        {!activeTabId && (
+          <div className="flex justify-center">
+            <div className="max-w-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 shadow-lg">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">공모전을 찾아보세요!</h3>
+                <p className="text-gray-600 mb-4">
+                  공모전을 선택하여 챗봇을 시작해보세요.<br/>
+                  공모전 상세보기에서 챗봇 생성하기 버튼을 클릭하세요.
+                </p>
+                <button
+                  onClick={() => {
+                    // 챗봇 모달을 닫고 메인 화면으로 이동
+                    window.dispatchEvent(new CustomEvent('closeChatbot'));
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-colors duration-200 font-medium shadow-md hover:shadow-lg"
+                >
+                  공모전 찾으러 가기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {messages.map((message, index) => (
           <div
             key={index}
@@ -267,53 +340,55 @@ function ChatView() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 입력 영역 */}
-      <div className="bg-white shadow-lg p-8 border-t border-blue-200">
-        <div className="max-w-6xl mx-auto">
-          {/* 제안서 만들기 버튼 */}
-          <div className="mb-4 flex justify-center">
-            <button
-              onClick={generateSummary}
-              disabled={messages.length <= 1 || isSummaryLoading}
-              className={`px-6 py-3 rounded-xl transition-all duration-200 shadow-md font-medium ${
-                messages.length <= 1 || isSummaryLoading
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-lg transform hover:scale-105'
-              }`}
-            >
-              {isSummaryLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>생성 중...</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span>제안서 만들기</span>
-                </div>
-              )}
-            </button>
-          </div>
-
-          {/* 입력 필드와 전송 버튼 */}
-          <div className="flex gap-6 items-end">
+          {/* 입력 영역 */}
+          <div className={`shadow-lg p-8 border-t border-blue-200 ${!activeTabId ? 'bg-gray-50' : 'bg-white'}`}>
+            <div className="max-w-6xl mx-auto">
+              {/* 입력 필드와 전송 버튼 */}
+              <div className="flex gap-4 items-end">
+                {/* 제안서 만들기 버튼 */}
+                <button
+                  onClick={generateSummary}
+                  disabled={messages.length <= 1 || isSummaryLoading || isLoading || isStreaming || !activeTabId}
+                  className={`px-4 py-3 rounded-xl transition-all duration-200 shadow-md font-medium flex-shrink-0 ${
+                    messages.length <= 1 || isSummaryLoading || isLoading || isStreaming || !activeTabId
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-lg transform hover:scale-105'
+                  }`}
+                >
+                  {isSummaryLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span className="text-sm">생성 중...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm">제안서</span>
+                    </div>
+                  )}
+                </button>
             <div className="flex-1 relative">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="메시지를 입력하세요..."
-                className="w-full bg-gray-50 text-gray-800 px-6 py-4 rounded-2xl border border-blue-200 focus:outline-none focus:border-blue-500 focus:bg-white transition-colors shadow-sm text-lg"
+                placeholder={!activeTabId ? "공모전을 먼저 찾아주세요..." : "메시지를 입력하세요..."}
+                disabled={!activeTabId}
+                className={`w-full px-6 py-4 rounded-2xl border transition-colors shadow-sm text-lg ${
+                  !activeTabId
+                    ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                    : 'bg-gray-50 text-gray-800 border-blue-200 focus:outline-none focus:border-blue-500 focus:bg-white'
+                }`}
               />
             </div>
             <button
               onClick={sendMessage}
-              disabled={isLoading || input.trim() === ''}
+              disabled={isLoading || input.trim() === '' || !activeTabId}
               className={`px-8 py-4 rounded-2xl transition-all duration-200 shadow-md text-lg ${
-                isLoading || input.trim() === ''
+                isLoading || input.trim() === '' || !activeTabId
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transform hover:scale-105'
               }`}

@@ -22,15 +22,32 @@ export const AssignmentProvider = ({ children }) => {
     
     if (savedTabs) {
       try {
-        setChatbotTabs(JSON.parse(savedTabs));
+        const parsedTabs = JSON.parse(savedTabs);
+        setChatbotTabs(parsedTabs);
+        
+        // 저장된 탭이 있으면 활성 탭 설정
+        if (savedActiveTab && parsedTabs.some(tab => tab.id === savedActiveTab)) {
+          setActiveTabId(savedActiveTab);
+        } else if (parsedTabs.length > 0) {
+          // 저장된 활성 탭이 유효하지 않으면 첫 번째 탭을 활성화
+          setActiveTabId(parsedTabs[0].id);
+          saveActiveTabToStorage(parsedTabs[0].id);
+        } else {
+          // 저장된 탭이 비어있으면 탭 없음 상태
+          setActiveTabId(null);
+          localStorage.removeItem('activeTabId');
+        }
       } catch (error) {
         console.error('챗봇 탭 정보 파싱 오류:', error);
         localStorage.removeItem('chatbotTabs');
+        localStorage.removeItem('activeTabId');
+        setChatbotTabs([]);
+        setActiveTabId(null);
       }
-    }
-    
-    if (savedActiveTab) {
-      setActiveTabId(savedActiveTab);
+    } else {
+      // 저장된 탭이 없으면 탭 없음 상태
+      setChatbotTabs([]);
+      setActiveTabId(null);
     }
   }, []);
 
@@ -70,6 +87,7 @@ export const AssignmentProvider = ({ children }) => {
     
     return newTab.id;
   };
+
 
   // 챗봇 탭 닫기
   const closeChatbotTab = (tabId) => {

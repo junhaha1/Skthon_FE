@@ -10,18 +10,24 @@ const ChatbotButton = () => {
     setIsOpen(!isOpen);
   };
 
-  // 전역 이벤트 리스너 추가
-  useEffect(() => {
-    const handleOpenChatbot = () => {
-      setIsOpen(true);
-    };
+      // 전역 이벤트 리스너 추가
+      useEffect(() => {
+        const handleOpenChatbot = () => {
+          setIsOpen(true);
+        };
 
-    window.addEventListener('openChatbot', handleOpenChatbot);
-    
-    return () => {
-      window.removeEventListener('openChatbot', handleOpenChatbot);
-    };
-  }, []);
+        const handleCloseChatbot = () => {
+          setIsOpen(false);
+        };
+
+        window.addEventListener('openChatbot', handleOpenChatbot);
+        window.addEventListener('closeChatbot', handleCloseChatbot);
+
+        return () => {
+          window.removeEventListener('openChatbot', handleOpenChatbot);
+          window.removeEventListener('closeChatbot', handleCloseChatbot);
+        };
+      }, []);
 
   return (
     <>
@@ -61,7 +67,7 @@ const ChatbotButton = () => {
           ></div>
           
           {/* 챗봇 모달 컨텐츠 */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[80vh] mx-4 overflow-hidden flex flex-col">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] mx-4 overflow-hidden flex flex-col">
             {/* 모달 헤더 */}
             <div className="bg-blue-600 text-white p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -84,13 +90,13 @@ const ChatbotButton = () => {
             </div>
 
             {/* 탭 시스템 */}
-            {chatbotTabs.length > 0 && (
+            {chatbotTabs.length > 0 && activeTabId && (
               <div className="bg-gray-100 border-b border-gray-200">
                 <div className="flex overflow-x-auto">
                   {chatbotTabs.map((tab) => (
                         <div
                           key={tab.id}
-                          className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                          className={`flex items-center gap-2 px-3 py-2 border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
                             activeTabId === tab.id
                               ? 'border-blue-600 bg-white text-blue-600'
                               : 'border-transparent text-gray-600 hover:text-gray-800'
