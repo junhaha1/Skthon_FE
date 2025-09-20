@@ -54,7 +54,14 @@ const LoginModal = ({ isOpen, onClose }) => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        const response = await ApiClient.login(formData.email, formData.password);
+        let response;
+        
+        // 사용자 타입에 따라 다른 API 호출
+        if (userType === 'company') {
+          response = await ApiClient.loginAdmin(formData.email, formData.password);
+        } else {
+          response = await ApiClient.login(formData.email, formData.password);
+        }
         
         // 로그인 성공 처리
         console.log('로그인 성공:', response);
@@ -62,10 +69,15 @@ const LoginModal = ({ isOpen, onClose }) => {
         // 사용자 정보를 AuthContext에 저장
         if (response.data) {
           const userData = {
-            id: response.data.id,
+            id: userType === 'company' ? response.data.companyId : response.data.id,
             email: response.data.email,
             name: response.data.name,
-            userType: userType
+            userType: userType,
+            // 기업용 로그인인 경우 추가 정보 저장
+            ...(userType === 'company' && {
+              companyId: response.data.companyId,
+              companyName: response.data.companyName
+            })
           };
           login(userData);
         }

@@ -249,6 +249,110 @@ static async summaryChat(assignmentId, totalContent) {
     return response.json();
   }
 
+  // 관리자 로그인 API
+  static async loginAdmin(email, password) {
+    const response = await fetch(`${this.baseURL}/login/admin`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 기업용 제안서 조회 API (특정 기업의 공고에 제출된 제안서들)
+  static async getProposalsByCompany(companyId) {
+    const response = await fetch(`${this.baseURL}/proposals/company/${companyId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 기업용 공고 조회 API (특정 기업이 올린 공고들)
+  static async getAssignmentsByCompany(companyId) {
+    const response = await fetch(`${this.baseURL}/assignments/company/${companyId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 관리자별 공고 조회 API (특정 관리자가 올린 공고들)
+  static async getAssignmentsByAdminId(adminId) {
+    const response = await fetch(`${this.baseURL}/assignments/admin/${adminId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 특정 과제의 제안서 목록 조회
+  static async getProposalsByAssignId(assignId) {
+    const response = await fetch(`${this.baseURL}/proposals/assignment/${assignId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 공고 등록
+  static async createAssignment(assignmentData) {
+    const response = await fetch(`${this.baseURL}/register/assignments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(assignmentData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);

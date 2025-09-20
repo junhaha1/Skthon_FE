@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
   const { createChatbotTab, chatbotTabs, findExistingTab } = useAssignment();
-  const { user } = useAuth();
+  const { user, isCompany } = useAuth();
   const [assignment, setAssignment] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -344,41 +344,46 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-                <button
-                  onClick={handleCreateChatbot}
-                  disabled={isCheckingProposal}
-                  className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium flex items-center gap-2 ${
-                    isCheckingProposal
-                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                  }`}
-                >
-                  {isCheckingProposal ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      확인 중...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      {hasExistingChatbot() ? '채팅으로 이동' : 'AI 챗봇 열기'}
-                    </>
-                  )}
-                </button>
-                {!assignment.endCheck && !isExpired(assignment.endAt) && (
-                  <button 
-                    onClick={handleParticipate}
-                    disabled={isCheckingProposal}
-                    className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium ${
-                      isCheckingProposal
-                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
-                  >
-                    {isCheckingProposal ? '확인 중...' : '참여하기'}
-                  </button>
+                {/* 개인 사용자에게만 챗봇 및 참여하기 버튼 표시 */}
+                {!isCompany() && (
+                  <>
+                    <button
+                      onClick={handleCreateChatbot}
+                      disabled={isCheckingProposal}
+                      className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium flex items-center gap-2 ${
+                        isCheckingProposal
+                          ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                          : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
+                    >
+                      {isCheckingProposal ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          확인 중...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          {hasExistingChatbot() ? '채팅으로 이동' : 'AI 챗봇 열기'}
+                        </>
+                      )}
+                    </button>
+                    {!assignment.endCheck && !isExpired(assignment.endAt) && (
+                      <button 
+                        onClick={handleParticipate}
+                        disabled={isCheckingProposal}
+                        className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium ${
+                          isCheckingProposal
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isCheckingProposal ? '확인 중...' : '참여하기'}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

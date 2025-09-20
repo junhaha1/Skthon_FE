@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
 import AssignmentDetailModal from './AssignmentDetailModal';
 
-const ContestList = () => {
+const ContestList = ({ isCompanyView = false }) => {
   const [assignments, setAssignments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');

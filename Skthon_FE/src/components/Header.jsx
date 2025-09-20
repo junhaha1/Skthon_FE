@@ -5,7 +5,7 @@ import RegisterModal from './RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isCompany } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -41,17 +41,19 @@ const Header = () => {
               </h1>
             </div>
 
-            {/* 네비게이션 메뉴 */}
-            <nav className="hidden md:flex space-x-8">
-              <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                번뜩 노트
-              </Link>
-              {isAuthenticated() && (
-                <Link to="/mypage" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                  마이 페이지
+            {/* 네비게이션 메뉴 - 개인 사용자에게만 표시 */}
+            {!isCompany() && (
+              <nav className="hidden md:flex space-x-8">
+                <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                  번뜩 노트
                 </Link>
-              )}
-            </nav>
+                {isAuthenticated() && (
+                  <Link to="/mypage" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                    마이 페이지
+                  </Link>
+                )}
+              </nav>
+            )}
 
             {/* 로그인/회원가입 버튼 또는 사용자 정보 */}
             <div className="flex items-center space-x-4">
@@ -69,6 +71,11 @@ const Header = () => {
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                       {user?.userType === 'user' ? '사용자' : '기업'}
                     </span>
+                    {user?.userType === 'company' && user?.companyName && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        {user.companyName}
+                      </span>
+                    )}
                   </div>
                   <button 
                     onClick={handleLogout}

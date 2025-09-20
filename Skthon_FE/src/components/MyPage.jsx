@@ -60,6 +60,11 @@ const MyPage = () => {
   const [selectedProposal, setSelectedProposal] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+  // 기업용 제안서 목록 상태 (기업 사용자가 받은 제안서들)
+  const [companyProposals, setCompanyProposals] = useState([]);
+  const [isLoadingCompanyProposals, setIsLoadingCompanyProposals] = useState(false);
+  const [companyProposalsError, setCompanyProposalsError] = useState('');
+
 
   const handleAddResume = () => {
     // 이력서 추가 로직
@@ -71,7 +76,7 @@ const MyPage = () => {
     console.log('포트폴리오 추가');
   };
 
-  // 제안서 목록 조회
+  // 제안서 목록 조회 (개인 사용자용)
   const fetchProposals = async () => {
     if (!user?.id) return;
     
@@ -93,10 +98,34 @@ const MyPage = () => {
     }
   };
 
+  // 기업용 제안서 목록 조회 (기업 사용자가 받은 제안서들)
+  const fetchCompanyProposals = async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingCompanyProposals(true);
+    setCompanyProposalsError('');
+    
+    try {
+      const response = await ApiClient.getProposalsByCompany(user.id);
+      console.log('기업 제안서 목록 응답:', response);
+      
+      setCompanyProposals(response.data || []);
+    } catch (error) {
+      console.error('기업 제안서 목록 조회 실패:', error);
+      setCompanyProposalsError('제안서 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setIsLoadingCompanyProposals(false);
+    }
+  };
+
   // 컴포넌트 마운트 시 제안서 목록 조회
   useEffect(() => {
-    fetchProposals();
-  }, [user?.id]);
+    if (user?.userType === 'company') {
+      fetchCompanyProposals();
+    } else {
+      fetchProposals();
+    }
+  }, [user?.id, user?.userType]);
 
   // 채택 상태에 따른 스타일 반환
   const getSelectedStatusStyle = (selected) => {
@@ -152,8 +181,15 @@ const MyPage = () => {
               홈으로
             </Link>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900">마이페이지</h1>
-              <p className="text-gray-600 mt-1">개인 정보와 포트폴리오를 관리하세요</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {user?.userType === 'company' ? '기업 관리 페이지' : '마이페이지'}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {user?.userType === 'company' 
+                  ? '기업 정보와 공고를 관리하세요' 
+                  : '개인 정보와 포트폴리오를 관리하세요'
+                }
+              </p>
             </div>
             <div className="w-20"></div> {/* 공간 확보용 */}
           </div>
@@ -191,6 +227,14 @@ const MyPage = () => {
                       </svg>
                       <span className="text-sm text-gray-600">{profileData.email || '이메일 없음'}</span>
                     </div>
+                    {user?.userType === 'company' && user?.companyName && (
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span className="text-sm text-gray-600">{user.companyName}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -262,101 +306,199 @@ const MyPage = () => {
         {/* 제안서 관리 섹션 */}
         <div className="space-y-6 mb-12">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">내 제안서</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {user?.userType === 'company' ? '받은 제안서' : '내 제안서'}
+            </h2>
             <button
-              onClick={fetchProposals}
-              disabled={isLoadingProposals}
+              onClick={user?.userType === 'company' ? fetchCompanyProposals : fetchProposals}
+              disabled={user?.userType === 'company' ? isLoadingCompanyProposals : isLoadingProposals}
               className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium text-sm"
             >
-              {isLoadingProposals ? '새로고침 중...' : '새로고침'}
+              {user?.userType === 'company' 
+                ? (isLoadingCompanyProposals ? '새로고침 중...' : '새로고침')
+                : (isLoadingProposals ? '새로고침 중...' : '새로고침')
+              }
             </button>
           </div>
 
-          {isLoadingProposals ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                <p className="text-gray-600">제안서 목록을 불러오는 중...</p>
-              </div>
-            </div>
-          ) : proposalsError ? (
-            <div className="text-center py-8">
-              <div className="mb-4">
-                <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">제안서를 불러올 수 없습니다</h3>
-              <p className="text-gray-600 mb-4">{proposalsError}</p>
-              <button 
-                onClick={fetchProposals}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                다시 시도
-              </button>
-            </div>
-          ) : proposals.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="mb-4">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">제출한 제안서가 없습니다</h3>
-              <p className="text-gray-600">공모전에 제안서를 제출해보세요!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {proposals.map((proposal) => (
-                <div key={proposal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-                        {proposal.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        공고: {proposal.assignTitle}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        제출일: {new Date(proposal.updateAt).toLocaleDateString('ko-KR')}
-                      </p>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSelectedStatusStyle(proposal.selected)}`}>
-                      {getSelectedStatusText(proposal.selected)}
-                    </span>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <p className="text-gray-700 text-sm line-clamp-3">
-                      {proposal.content}
-                    </p>
-                  </div>
-                  
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleViewProposalDetail(proposal)}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
-                    >
-                      상세보기
-                    </button>
+          {user?.userType === 'company' ? (
+            // 기업 사용자용 제안서 목록
+            isLoadingCompanyProposals ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                    <p className="text-gray-600">제안서 목록을 불러오는 중...</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : companyProposalsError ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">제안서를 불러올 수 없습니다</h3>
+                  <p className="text-gray-600 mb-4">{companyProposalsError}</p>
+                  <button 
+                    onClick={fetchCompanyProposals}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              </div>
+            ) : companyProposals.length === 0 ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">받은 제안서가 없습니다</h3>
+                  <p className="text-gray-600">아직 공고에 제출된 제안서가 없습니다.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {companyProposals.map((proposal) => (
+                  <div key={proposal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                          {proposal.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          공고: {proposal.assignTitle}
+                        </p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          제출자: {proposal.userName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          제출일: {new Date(proposal.updateAt).toLocaleDateString('ko-KR')}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSelectedStatusStyle(proposal.selected)}`}>
+                        {getSelectedStatusText(proposal.selected)}
+                      </span>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-gray-700 text-sm line-clamp-3">
+                        {proposal.content}
+                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleViewProposalDetail(proposal)}
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                      >
+                        상세보기
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            // 개인 사용자용 제안서 목록
+            isLoadingProposals ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                    <p className="text-gray-600">제안서 목록을 불러오는 중...</p>
+                  </div>
+                </div>
+              </div>
+            ) : proposalsError ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">제안서를 불러올 수 없습니다</h3>
+                  <p className="text-gray-600 mb-4">{proposalsError}</p>
+                  <button 
+                    onClick={fetchProposals}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    다시 시도
+                  </button>
+                </div>
+              </div>
+            ) : proposals.length === 0 ? (
+              <div className="w-full min-h-screen bg-gray-50 px-6 py-8">
+                <div className="text-center py-8">
+                  <div className="mb-4">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">제출한 제안서가 없습니다</h3>
+                  <p className="text-gray-600">공모전에 제안서를 제출해보세요!</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {proposals.map((proposal) => (
+                  <div key={proposal.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                          {proposal.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          공고: {proposal.assignTitle}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          제출일: {new Date(proposal.updateAt).toLocaleDateString('ko-KR')}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSelectedStatusStyle(proposal.selected)}`}>
+                        {getSelectedStatusText(proposal.selected)}
+                      </span>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <p className="text-gray-700 text-sm line-clamp-3">
+                        {proposal.content}
+                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleViewProposalDetail(proposal)}
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                      >
+                        상세보기
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
 
-        {/* 포트폴리오 관리 섹션 */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-gray-900">포트폴리오 관리</h2>
-            <button
-              onClick={handleAddPortfolio}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
-            >
-              새 포트폴리오 추가
-            </button>
-          </div>
+        {/* 포트폴리오 관리 섹션 - 개인 사용자만 표시 */}
+        {user?.userType !== 'company' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">포트폴리오 관리</h2>
+              <button
+                onClick={handleAddPortfolio}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium"
+              >
+                새 포트폴리오 추가
+              </button>
+            </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {portfolios.map((portfolio) => (
@@ -396,7 +538,8 @@ const MyPage = () => {
               </div>
             ))}
           </div>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* 제안서 상세 모달 */}
