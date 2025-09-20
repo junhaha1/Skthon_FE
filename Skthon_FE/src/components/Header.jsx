@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -36,21 +37,20 @@ const Header = () => {
             {/* 로고 */}
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-blue-600">
-                공모전 커뮤니티
+                번뜩
               </h1>
             </div>
 
             {/* 네비게이션 메뉴 */}
             <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                공모전
-              </a>
-              <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                커뮤니티
-              </a>
-              <a href="#" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
-                정보
-              </a>
+              <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                번뜩 노트
+              </Link>
+              {isAuthenticated() && (
+                <Link to="/mypage" className="text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                  마이 페이지
+                </Link>
+              )}
             </nav>
 
             {/* 로그인/회원가입 버튼 또는 사용자 정보 */}

@@ -94,7 +94,7 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:text-blue-200 transition-colors"
+            className="text-black hover:text-gray-600 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -224,9 +224,11 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={onClose}
-                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium"
+                  className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium flex items-center justify-center"
                 >
-                  닫기
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
                 <button
                   onClick={handleCreateChatbot}

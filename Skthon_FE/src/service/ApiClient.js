@@ -164,27 +164,30 @@ class ApiClient {
   }
 
   // 대화 내용 요약 API
-  static async summaryChat(assignmentId, totalContent) {
-    const requestBody = {
-      assignmentId: assignmentId,
-      totalContent: totalContent
-    };
+static async summaryChat(assignmentId, totalContent) {
+  const requestBody = {
+    assignmentId: assignmentId,
+    totalContent: totalContent
+  };
 
-    const response = await fetch(`${this.baseURL}/answer/summaryChat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
+  const response = await fetch(`${this.baseURL}/answer/summaryChat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer dummy-token' // ✅ 아무 값이나 추가
+    },
+    body: JSON.stringify(requestBody)
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return response.text(); // 응답이 JSON이 아닌 텍스트 형태
+  if (!response.ok) {
+    // 서버 응답이 text/plain 이라면 json() 쓰면 터집니다 → text()로 바꿔야 안전
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP error! status: ${response.status}`);
   }
+
+  return response.text(); // 응답은 텍스트
+}
+
 
   // 테스트 API
   static async test() {
