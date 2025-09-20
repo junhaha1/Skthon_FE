@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import ChatView from "./AiChat/chatView";
 
 function App() {
   const [testResult, setTestResult] = useState("");
+  const [currentView, setCurrentView] = useState("main"); // "main" 또는 "chat"
 
   const handleTestButton = async () => {
     try {
@@ -14,6 +16,21 @@ function App() {
     }
   };
 
+  // 챗봇 화면으로 이동
+  const goToChat = () => {
+    setCurrentView("chat");
+  };
+
+  // 메인 화면으로 돌아가기
+  const goToMain = () => {
+    setCurrentView("main");
+  };
+
+  // 현재 화면에 따라 다른 컴포넌트 렌더링
+  if (currentView === "chat") {
+    return <ChatView onBack={goToMain} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md">
@@ -24,6 +41,13 @@ function App() {
           className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
         >
           테스트 버튼
+        </button>
+        
+        <button
+          onClick={goToChat}
+          className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mb-4"
+        >
+          AI 챗봇 시작하기
         </button>
         
         {testResult && (
