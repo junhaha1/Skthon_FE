@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
 import { useAssignment } from '../contexts/AssignmentContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
-  const { createChatbotTab, chatbotTabs } = useAssignment();
+  const { createChatbotTab, chatbotTabs, findExistingTab } = useAssignment();
+  const { user } = useAuth();
   const [assignment, setAssignment] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isCheckingProposal, setIsCheckingProposal] = useState(false);
 
   useEffect(() => {
     if (isOpen && assignmentId) {
@@ -52,19 +55,130 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
   };
 
   // 챗봇 생성하기
-  const handleCreateChatbot = () => {
-    if (assignment) {
+  const handleCreateChatbot = async () => {
+    if (!assignment) return;
+    
+    // 사용자 로그인 확인
+    if (!user?.id) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // 이미 해당 공고의 탭이 있는지 확인
+    const existingTab = findExistingTab(assignment.id);
+    if (existingTab) {
+      // 기존 탭이 있으면 해당 탭으로 이동
+      onClose(); // 상세보기 모달 닫기
+      window.dispatchEvent(new CustomEvent('switchToTab', { 
+        detail: { assignmentId: assignment.id } 
+      }));
+      return;
+    }
+
+    setIsCheckingProposal(true);
+    
+    try {
+      // 제안서 제출 여부 확인
+      const response = await ApiClient.checkProposal(user.id, assignment.id);
+      console.log('제안서 확인 응답:', response);
+      
+      // API 응답이 직접 boolean인지, 아니면 {data: boolean} 형태인지 확인
+      const hasSubmitted = response.data !== undefined ? response.data : response;
+      console.log('제안서 제출 여부:', hasSubmitted);
+      
+      if (hasSubmitted === true) {
+        alert('이미 참여한 공고입니다!');
+        return;
+      }
+      
+      // 제안서가 없으면 챗봇 생성 진행
       createChatbotTab(assignment);
       onClose(); // 상세보기 모달 닫기
       
       // 챗봇 모달 열기 (전역 이벤트 발생)
       window.dispatchEvent(new CustomEvent('openChatbot'));
+      
+    } catch (error) {
+      console.error('제안서 확인 실패:', error);
+      
+      // 404 에러인 경우 API가 아직 구현되지 않았을 수 있으므로 일단 진행
+      if (error.message.includes('404')) {
+        console.log('제안서 확인 API가 아직 구현되지 않음. 챗봇 생성 진행');
+        createChatbotTab(assignment);
+        onClose();
+        window.dispatchEvent(new CustomEvent('openChatbot'));
+      } else {
+        alert('제안서 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsCheckingProposal(false);
     }
   };
 
   // 해당 과제에 대한 챗봇 탭이 이미 있는지 확인
   const hasExistingChatbot = () => {
     return chatbotTabs.some(tab => tab.assignmentId === assignmentId);
+  };
+
+  // 참여하기 버튼 클릭
+  const handleParticipate = async () => {
+    if (!assignment) return;
+    
+    // 사용자 로그인 확인
+    if (!user?.id) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // 이미 해당 공고의 탭이 있는지 확인
+    const existingTab = findExistingTab(assignment.id);
+    if (existingTab) {
+      // 기존 탭이 있으면 해당 탭으로 이동
+      onClose(); // 상세보기 모달 닫기
+      window.dispatchEvent(new CustomEvent('switchToTab', { 
+        detail: { assignmentId: assignment.id } 
+      }));
+      return;
+    }
+
+    setIsCheckingProposal(true);
+    
+    try {
+      // 제안서 제출 여부 확인
+      const response = await ApiClient.checkProposal(user.id, assignment.id);
+      console.log('참여하기 - 제안서 확인 응답:', response);
+      
+      // API 응답이 직접 boolean인지, 아니면 {data: boolean} 형태인지 확인
+      const hasSubmitted = response.data !== undefined ? response.data : response;
+      console.log('참여하기 - 제안서 제출 여부:', hasSubmitted);
+      
+      if (hasSubmitted === true) {
+        alert('이미 참여한 공고입니다!');
+        return;
+      }
+      
+      // 제안서가 없으면 챗봇 생성 진행
+      createChatbotTab(assignment);
+      onClose(); // 상세보기 모달 닫기
+      
+      // 챗봇 모달 열기 (전역 이벤트 발생)
+      window.dispatchEvent(new CustomEvent('openChatbot'));
+      
+    } catch (error) {
+      console.error('제안서 확인 실패:', error);
+      
+      // 404 에러인 경우 API가 아직 구현되지 않았을 수 있으므로 일단 진행
+      if (error.message.includes('404')) {
+        console.log('제안서 확인 API가 아직 구현되지 않음. 챗봇 생성 진행');
+        createChatbotTab(assignment);
+        onClose();
+        window.dispatchEvent(new CustomEvent('openChatbot'));
+      } else {
+        alert('제안서 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsCheckingProposal(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -232,16 +346,38 @@ const AssignmentDetailModal = ({ isOpen, onClose, assignmentId }) => {
                 </button>
                 <button
                   onClick={handleCreateChatbot}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium flex items-center gap-2"
+                  disabled={isCheckingProposal}
+                  className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium flex items-center gap-2 ${
+                    isCheckingProposal
+                      ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  {hasExistingChatbot() ? '챗봇 열기' : '챗봇 생성하기'}
+                  {isCheckingProposal ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      확인 중...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      {hasExistingChatbot() ? '채팅으로 이동' : 'AI 챗봇 열기'}
+                    </>
+                  )}
                 </button>
                 {!assignment.endCheck && !isExpired(assignment.endAt) && (
-                  <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium">
-                    참여하기
+                  <button 
+                    onClick={handleParticipate}
+                    disabled={isCheckingProposal}
+                    className={`px-6 py-3 rounded-lg transition-colors duration-200 font-medium ${
+                      isCheckingProposal
+                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {isCheckingProposal ? '확인 중...' : '참여하기'}
                   </button>
                 )}
               </div>

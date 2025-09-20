@@ -60,7 +60,7 @@ const ContestList = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="mt-4 text-gray-600">과제를 불러오는 중...</p>
@@ -71,7 +71,7 @@ const ContestList = () => {
 
   if (error) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
+      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
         <div className="text-center">
           <div className="mb-4">
             <svg className="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

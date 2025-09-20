@@ -66,8 +66,24 @@ export const AssignmentProvider = ({ children }) => {
     setSelectedAssignment(assignment);
   };
 
-  // 챗봇 탭 생성
+  // 특정 공고의 탭이 이미 존재하는지 확인
+  const findExistingTab = (assignmentId) => {
+    return chatbotTabs.find(tab => tab.assignmentId === assignmentId);
+  };
+
+  // 챗봇 탭 생성 또는 기존 탭으로 이동
   const createChatbotTab = (assignment) => {
+    // 이미 해당 공고의 탭이 있는지 확인
+    const existingTab = findExistingTab(assignment.id);
+    
+    if (existingTab) {
+      // 기존 탭이 있으면 해당 탭으로 이동
+      setActiveTabId(existingTab.id);
+      saveActiveTabToStorage(existingTab.id);
+      return existingTab.id;
+    }
+
+    // 새로운 탭 생성
     const newTab = {
       id: `tab_${assignment.id}_${Date.now()}`,
       assignmentId: assignment.id,
@@ -136,7 +152,8 @@ export const AssignmentProvider = ({ children }) => {
     closeChatbotTab,
     setActiveTab,
     updateTabMessages,
-    getActiveTab
+    getActiveTab,
+    findExistingTab
   };
 
   return (

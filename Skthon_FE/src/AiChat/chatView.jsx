@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiClient from '../service/ApiClient';
 import SummaryModal from '../components/SummaryModal';
+import ProposalSubmission from '../components/ProposalSubmission';
 import { useAssignment } from '../contexts/AssignmentContext';
 
 function ChatView() {
@@ -16,6 +17,7 @@ function ChatView() {
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [isAssignmentInfoExpanded, setIsAssignmentInfoExpanded] = useState(false);
   const [showFindAssignmentMessage, setShowFindAssignmentMessage] = useState(false);
+  const [showProposalSubmission, setShowProposalSubmission] = useState(false);
   const messagesEndRef = useRef(null);
 
   // 활성 탭이 변경될 때 메시지 업데이트
@@ -203,6 +205,9 @@ function ChatView() {
       const summary = await ApiClient.summaryChat(activeTab.assignment.id, totalContent);
       console.log('Summary:', summary);
       setSummaryContent(summary);
+      
+      // 제안서 제출 화면으로 전환
+      setShowProposalSubmission(true);
     } catch (error) {
       console.error('요약 생성 실패:', error);
       setSummaryContent('요약 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
@@ -214,6 +219,16 @@ function ChatView() {
   // 현재 탭의 assignment 정보 가져오기
   const activeTab = getActiveTab();
   const currentAssignment = activeTab?.assignment;
+
+  // 제안서 제출 화면 표시
+  if (showProposalSubmission) {
+    return (
+      <ProposalSubmission 
+        onBack={() => setShowProposalSubmission(false)}
+        summaryContent={summaryContent}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
@@ -276,19 +291,19 @@ function ChatView() {
       )}
 
       {/* 메시지 영역 */}
-      <div className="flex-1 overflow-y-auto p-8 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* 탭이 없을 때 공모전 찾으러 가기 메시지 */}
         {!activeTabId && (
           <div className="flex justify-center">
-            <div className="max-w-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 shadow-lg">
+            <div className="max-w-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-md">
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">공모전을 찾아보세요!</h3>
-                <p className="text-gray-600 mb-4">
+                <h3 className="text-base font-semibold text-gray-800 mb-2">공모전을 찾아보세요!</h3>
+                <p className="text-sm text-gray-600 mb-3">
                   공모전을 선택하여 챗봇을 시작해보세요.<br/>
                   공모전 상세보기에서 챗봇 생성하기 버튼을 클릭하세요.
                 </p>
@@ -297,7 +312,7 @@ function ChatView() {
                     // 챗봇 모달을 닫고 메인 화면으로 이동
                     window.dispatchEvent(new CustomEvent('closeChatbot'));
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-colors duration-200 font-medium shadow-md hover:shadow-lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium shadow-sm hover:shadow-md text-sm"
                 >
                   공모전 찾으러 가기
                 </button>
@@ -317,14 +332,14 @@ function ChatView() {
               </div>
             )}
             <div
-              className={`max-w-2xl lg:max-w-4xl px-6 py-4 rounded-2xl shadow-lg relative ${
+              className={`max-w-2xl lg:max-w-4xl px-4 py-3 rounded-xl shadow-md relative ${
                 message.role === 'user'
                   ? 'bg-blue-500 text-white rounded-br-md'
                   : 'bg-white text-gray-800 rounded-bl-md border border-blue-200'
               }`}
             >
-              <div className="flex items-center gap-3">
-                <p className="whitespace-pre-wrap leading-relaxed flex-1 text-lg">{message.content}</p>
+              <div className="flex items-center gap-2">
+                <p className="whitespace-pre-wrap leading-relaxed flex-1 text-sm">{message.content}</p>
                 {message.role === 'ai' && isStreaming && messages.length - 1 === index && (
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 flex-shrink-0"></div>
                 )}
@@ -341,31 +356,31 @@ function ChatView() {
       </div>
 
           {/* 입력 영역 */}
-          <div className={`shadow-lg p-8 border-t border-blue-200 ${!activeTabId ? 'bg-gray-50' : 'bg-white'}`}>
+          <div className={`shadow-lg p-4 border-t border-blue-200 ${!activeTabId ? 'bg-gray-50' : 'bg-white'}`}>
             <div className="max-w-6xl mx-auto">
               {/* 입력 필드와 전송 버튼 */}
-              <div className="flex gap-4 items-end">
+              <div className="flex gap-3 items-end">
                 {/* 제안서 만들기 버튼 */}
                 <button
                   onClick={generateSummary}
                   disabled={messages.length <= 1 || isSummaryLoading || isLoading || isStreaming || !activeTabId}
-                  className={`px-4 py-3 rounded-xl transition-all duration-200 shadow-md font-medium flex-shrink-0 ${
+                  className={`px-3 py-2 rounded-lg transition-all duration-200 shadow-sm font-medium flex-shrink-0 ${
                     messages.length <= 1 || isSummaryLoading || isLoading || isStreaming || !activeTabId
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-lg transform hover:scale-105'
+                      : 'bg-green-500 hover:bg-green-600 text-white hover:shadow-md'
                   }`}
                 >
                   {isSummaryLoading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span className="text-sm">생성 중...</span>
+                    <div className="flex items-center gap-1">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <span className="text-xs">생성 중...</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span className="text-sm">제안서</span>
+                      <span className="text-xs">제안서</span>
                     </div>
                   )}
                 </button>
@@ -377,7 +392,7 @@ function ChatView() {
                 onKeyPress={handleKeyPress}
                 placeholder={!activeTabId ? "공모전을 먼저 찾아주세요..." : "메시지를 입력하세요..."}
                 disabled={!activeTabId}
-                className={`w-full px-6 py-4 rounded-2xl border transition-colors shadow-sm text-lg ${
+                className={`w-full px-4 py-2 rounded-lg border transition-colors shadow-sm text-sm ${
                   !activeTabId
                     ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                     : 'bg-gray-50 text-gray-800 border-blue-200 focus:outline-none focus:border-blue-500 focus:bg-white'
@@ -387,15 +402,15 @@ function ChatView() {
             <button
               onClick={sendMessage}
               disabled={isLoading || input.trim() === '' || !activeTabId}
-              className={`px-8 py-4 rounded-2xl transition-all duration-200 shadow-md text-lg ${
+              className={`px-4 py-2 rounded-lg transition-all duration-200 shadow-sm text-sm ${
                 isLoading || input.trim() === '' || !activeTabId
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-lg transform hover:scale-105'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white hover:shadow-md'
               }`}
             >
               {isLoading ? (
-                <div className="flex items-center gap-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                   <span className="font-medium">전송 중...</span>
                 </div>
               ) : (

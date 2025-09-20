@@ -189,6 +189,66 @@ static async summaryChat(assignmentId, totalContent) {
 }
 
 
+  // 제안서 전체 조회 API
+  static async getAllProposals() {
+    const response = await fetch(`${this.baseURL}/proposals`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // 제안서 제출 여부 확인 API
+  static async checkProposal(userId, assignId) {
+    const response = await fetch(`${this.baseURL}/proposals/check?userId=${userId}&assignId=${assignId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      let errorMessage;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message;
+      } catch {
+        errorMessage = await response.text();
+      }
+      throw new Error(errorMessage || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log("제안서 제출 여부 확인 결과:", result);
+    return result.data;  // true or false 만 넘겨줌
+  }
+
+  // 제안서 제출 API
+  static async submitProposal(proposalData) {
+    const response = await fetch(`${this.baseURL}/proposals`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(proposalData)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   // 테스트 API
   static async test() {
     const response = await fetch(`${this.baseURL}/test`);

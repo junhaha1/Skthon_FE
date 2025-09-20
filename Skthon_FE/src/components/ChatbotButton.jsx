@@ -1,13 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import ChatView from '../AiChat/chatView';
+import ConfirmModal from './ConfirmModal';
 import { useAssignment } from '../contexts/AssignmentContext';
 
 const ChatbotButton = () => {
-  const { chatbotTabs, activeTabId, setActiveTab, closeChatbotTab } = useAssignment();
+  const { chatbotTabs, activeTabId, setActiveTab, closeChatbotTab, findExistingTab } = useAssignment();
   const [isOpen, setIsOpen] = useState(false);
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    tabId: null,
+    tabTitle: ''
+  });
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleCloseTab = (tabId, tabTitle) => {
+    setConfirmModal({
+      isOpen: true,
+      tabId: tabId,
+      tabTitle: tabTitle
+    });
+  };
+
+  const handleConfirmClose = () => {
+    closeChatbotTab(confirmModal.tabId);
+    setConfirmModal({
+      isOpen: false,
+      tabId: null,
+      tabTitle: ''
+    });
+  };
+
+  const handleCancelClose = () => {
+    setConfirmModal({
+      isOpen: false,
+      tabId: null,
+      tabTitle: ''
+    });
   };
 
       // 전역 이벤트 리스너 추가
@@ -20,14 +51,26 @@ const ChatbotButton = () => {
           setIsOpen(false);
         };
 
+        const handleSwitchToTab = (event) => {
+          const { assignmentId } = event.detail;
+          const existingTab = findExistingTab(assignmentId);
+          
+          if (existingTab) {
+            setActiveTab(existingTab.id);
+            setIsOpen(true);
+          }
+        };
+
         window.addEventListener('openChatbot', handleOpenChatbot);
         window.addEventListener('closeChatbot', handleCloseChatbot);
+        window.addEventListener('switchToTab', handleSwitchToTab);
 
         return () => {
           window.removeEventListener('openChatbot', handleOpenChatbot);
           window.removeEventListener('closeChatbot', handleCloseChatbot);
+          window.removeEventListener('switchToTab', handleSwitchToTab);
         };
-      }, []);
+      }, [findExistingTab, setActiveTab]);
 
   return (
     <>
@@ -116,7 +159,7 @@ const ChatbotButton = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          closeChatbotTab(tab.id);
+                          handleCloseTab(tab.id, tab.assignmentTitle);
                         }}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                       >
@@ -137,6 +180,17 @@ const ChatbotButton = () => {
           </div>
         </div>
       )}
+
+      {/* 확인 모달 */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={handleCancelClose}
+        onConfirm={handleConfirmClose}
+        title="탭 닫기 확인"
+        message={`"${confirmModal.tabTitle}" 탭을 닫으시겠습니까?\n\n대화 내용이 삭제됩니다.`}
+        confirmText="닫기"
+        cancelText="취소"
+      />
     </>
   );
 };
